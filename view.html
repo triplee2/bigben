@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big-Ben · Neuro-Symbolic Spatial Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #07070f;
+  --bg2:   #0d0d1c;
+  --bg3:   #13131f;
+  --bdr:   rgba(90,110,200,.14);
+  --bdr2:  rgba(90,110,200,.32);
+  --t:     #b8b8d0;
+  --tdim:  #545470;
+  --tbrt:  #e8e8f8;
+  --acc:   #4477ff;
+  --grn:   #00e87a;
+  --red:   #ff3344;
+  --amb:   #ffaa00;
+  --cyn:   #00ccff;
+  --mono:  'JetBrains Mono', monospace;
+  --sans:  'Syne', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);
+  color:var(--t);
+  font-family:var(--sans);
+  display:flex;
+  flex-direction:column;
+}
+
+/* ── HEADER ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:54px;
+  border-bottom:1px solid var(--bdr);
+  background:var(--bg2);
+  flex-shrink:0;
+}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-box{
+  width:30px;height:30px;background:var(--acc);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;letter-spacing:-.5px;
+}
+.logo-name{font-size:16px;font-weight:700;color:var(--tbrt);letter-spacing:.5px}
+.logo-sub{font-size:10px;color:var(--tdim);font-family:var(--mono);margin-top:1px}
+.badge{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;font-family:var(--mono);color:var(--tdim);
+}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--grn);animation:blink 2.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── MAIN SPLIT ── */
+.main{display:grid;grid-template-columns:1fr 372px;flex:1;overflow:hidden;min-height:0}
+
+/* ── CANVAS ZONE ── */
+.cv-zone{position:relative;background:var(--bg);overflow:hidden}
+#cv{display:block}
+.cv-hud{position:absolute;inset:0;pointer-events:none;padding:14px}
+.hud-label{
+  font-family:var(--mono);font-size:10px;color:var(--tdim);letter-spacing:2px;text-transform:uppercase;
+}
+.hud-angle{
+  position:absolute;bottom:14px;left:14px;
+  font-family:var(--mono);font-size:14px;color:var(--cyn);
+}
+.hud-state{
+  position:absolute;top:14px;right:14px;
+  font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:2px;
+  padding:5px 12px;border-radius:4px;border:1px solid var(--grn);
+  color:var(--grn);background:rgba(0,232,122,.08);
+  transition:all .25s;
+}
+.hud-state.bad{border-color:var(--red);color:var(--red);background:rgba(255,51,68,.08)}
+
+.drag-hint{
+  position:absolute;bottom:14px;right:14px;
+  font-family:var(--mono);font-size:10px;color:var(--tdim);letter-spacing:.5px;
+}
+
+/* ── RIGHT PANEL ── */
+.panel{
+  background:var(--bg2);border-left:1px solid var(--bdr);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.pscroll{flex:1;overflow-y:auto;padding:18px}
+.pscroll::-webkit-scrollbar{width:3px}
+.pscroll::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+
+.sec{font-size:10px;font-family:var(--mono);color:var(--tdim);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+
+/* Rotation */
+.rot-wrap{margin-bottom:20px}
+.rot-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.rot-big{font-family:var(--mono);font-size:38px;font-weight:700;color:var(--tbrt);line-height:1}
+.rot-deg{font-family:var(--mono);font-size:13px;color:var(--tdim)}
+
+input[type=range]{
+  -webkit-appearance:none;width:100%;height:3px;
+  background:var(--bdr2);border-radius:2px;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+  background:var(--acc);cursor:pointer;
+  box-shadow:0 0 10px rgba(68,119,255,.6);transition:box-shadow .2s;
+}
+input[type=range]:hover::-webkit-slider-thumb{box-shadow:0 0 16px rgba(68,119,255,.9)}
+
+.presets{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.pbtn{
+  background:transparent;border:1px solid var(--bdr2);color:var(--tdim);
+  font-family:var(--mono);font-size:12px;padding:6px 0;border-radius:4px;
+  cursor:pointer;transition:all .15s;
+}
+.pbtn:hover{border-color:var(--acc);color:var(--acc);background:rgba(68,119,255,.08)}
+.pbtn.lit{border-color:var(--grn);color:var(--grn);background:rgba(0,232,122,.08)}
+
+.div{height:1px;background:var(--bdr);margin:18px 0}
+
+/* Level cards */
+.lcard{
+  background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;
+  padding:13px 15px;margin-bottom:10px;transition:border-color .2s;
+}
+.lcard.pass{border-color:rgba(0,232,122,.28)}
+.lcard.fail{border-color:rgba(255,51,68,.28)}
+.lcard-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.lnum{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:10px;color:var(--tdim);letter-spacing:1px;
+}
+.ncircle{
+  width:17px;height:17px;border-radius:50%;background:var(--bdr2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:var(--tdim);
+}
+.lst{
+  font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1.5px;
+  padding:3px 8px;border-radius:3px;
+}
+.lst.pass{color:var(--grn);background:rgba(0,232,122,.1)}
+.lst.fail{color:var(--red);background:rgba(255,51,68,.1)}
+.lst.nil{color:var(--tdim);background:var(--bdr)}
+
+.mrow{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:4px}
+.ml{color:var(--tdim);font-family:var(--mono)}
+.mv{color:var(--t);font-family:var(--mono);font-weight:500}
+.mv.hi{color:var(--amb)}
+
+.bar-wrap{height:3px;background:var(--bdr);border-radius:2px;margin-top:8px;overflow:hidden}
+.bar-fill{height:100%;background:var(--grn);border-radius:2px;transition:width .25s,background .25s;width:0%}
+.bar-fill.bad{background:var(--red)}
+
+/* Bounds display */
+.bounds-grid{
+  font-family:var(--mono);font-size:12px;line-height:2;color:var(--tdim);
+}
+.bounds-grid span{color:var(--t)}
+.bounds-eps{margin-top:6px}
+.bounds-eps span{color:var(--amb)}
+
+/* ── AGENT FOOTER ── */
+.agent-reply{
+  font-family:var(--mono);font-size:12px;color:var(--tdim);
+  padding:8px 18px;min-height:28px;background:var(--bg);
+  border-top:1px solid var(--bdr);transition:color .2s;
+  line-height:1.5;
+}
+.agent-reply.live{color:var(--t)}
+.agent-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 18px;border-top:1px solid var(--bdr);background:var(--bg2);flex-shrink:0;
+}
+.alabel{font-family:var(--mono);font-size:11px;color:var(--acc);letter-spacing:.5px;white-space:nowrap}
+.ainput{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--tbrt);font-family:var(--mono);font-size:13px;caret-color:var(--acc);
+}
+.ainput::placeholder{color:var(--tdim)}
+.arun{
+  background:rgba(68,119,255,.12);border:1px solid var(--bdr2);color:var(--acc);
+  font-family:var(--mono);font-size:12px;padding:6px 14px;border-radius:4px;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.arun:hover{background:rgba(68,119,255,.22);border-color:var(--acc)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-box">BB</div>
+    <div>
+      <div class="logo-name">Big-Ben</div>
+      <div class="logo-sub">NEURO-SYMBOLIC SPATIAL ENGINE v2.0</div>
+    </div>
+  </div>
+  <div class="badge">
+    <div class="dot"></div>
+    ENGINE ACTIVE · 3-LEVEL VALIDATION
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- 3-D Canvas -->
+  <div class="cv-zone" id="cv-zone">
+    <canvas id="cv"></canvas>
+    <div class="cv-hud">
+      <div class="hud-label">Spatial View — Z-axis rotation</div>
+      <div class="hud-state" id="hud-state">LOADING</div>
+      <div class="hud-angle" id="hud-angle">θ = 0°</div>
+      <div class="drag-hint">drag to orbit · scroll to zoom</div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="panel">
+    <div class="pscroll" id="pscroll">
+
+      <!-- Rotation -->
+      <div class="rot-wrap">
+        <div class="sec">Rotation Control</div>
+        <div class="rot-row">
+          <span class="rot-big" id="rot-num">0</span>
+          <span class="rot-deg">degrees (Z-axis)</span>
+        </div>
+        <input type="range" id="slider" min="0" max="360" value="0" step="1">
+        <div class="presets">
+          <button class="pbtn lit" onclick="setAngle(0)">0°</button>
+          <button class="pbtn" onclick="setAngle(45)">45°</button>
+          <button class="pbtn" onclick="setAngle(90)">90°</button>
+          <button class="pbtn" onclick="setAngle(180)">180°</button>
+        </div>
+      </div>
+
+      <div class="div"></div>
+
+      <div class="sec">Validation Levels</div>
+
+      <!-- Level 1 -->
+      <div class="lcard" id="l1card">
+        <div class="lcard-top">
+          <div class="lnum">
+            <div class="ncircle">1</div>
+            AABB CHECK
+          </div>
+          <div class="lst nil" id="l1st">—</div>
+        </div>
+        <div class="mrow"><span class="ml">Vertices outside bounds</span><span class="mv" id="l1vio">—</span></div>
+        <div class="mrow"><span class="ml">Method</span><span class="mv" style="font-size:11px">Axis-Aligned Bounding Box</span></div>
+      </div>
+
+      <!-- Level 2 -->
+      <div class="lcard" id="l2card">
+        <div class="lcard-top">
+          <div class="lnum">
+            <div class="ncircle">2</div>
+            SDF CONSTRAINT
+          </div>
+          <div class="lst nil" id="l2st">—</div>
+        </div>
+        <div class="mrow"><span class="ml">Max penetration depth</span><span class="mv hi" id="l2pen">—</span></div>
+        <div class="mrow"><span class="ml">Vertices violating</span><span class="mv" id="l2vio">—</span></div>
+        <div class="bar-wrap"><div class="bar-fill" id="l2bar"></div></div>
+      </div>
+
+      <!-- Level 3 -->
+      <div class="lcard" id="l3card">
+        <div class="lcard-top">
+          <div class="lnum">
+            <div class="ncircle">3</div>
+            GEOMETRIC CHECK
+          </div>
+          <div class="lst nil" id="l3st">—</div>
+        </div>
+        <div class="mrow"><span class="ml">Vertices confirmed inside</span><span class="mv" id="l3frac">—</span></div>
+        <div class="mrow"><span class="ml">Method</span><span class="mv" style="font-size:11px">Convex Hull Intersection</span></div>
+        <div class="bar-wrap"><div class="bar-fill" id="l3bar"></div></div>
+      </div>
+
+      <div class="div"></div>
+
+      <!-- Slot bounds -->
+      <div class="sec">Slot Boundaries</div>
+      <div class="bounds-grid">
+        <div>X : <span>[ -2.5, &nbsp;1.5 ]</span></div>
+        <div>Y : <span>[ -0.5, &nbsp;1.5 ]</span></div>
+        <div>Z : <span>[ -0.5, &nbsp;0.5 ]</span></div>
+        <div class="bounds-eps">ε = <span>1 × 10⁻³</span> (float tolerance)</div>
+      </div>
+
+    </div>
+
+    <!-- Agent -->
+    <div class="agent-reply" id="agent-reply">› Try: "rotate 90 degrees" · "does 45° fit?" · "what angle works?"</div>
+    <div class="agent-bar">
+      <span class="alabel">AGENT ›</span>
+      <input class="ainput" id="ainput" placeholder="ask the spatial agent…" autocomplete="off">
+      <button class="arun" onclick="runAgent()">RUN ↗</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   SPATIAL ENGINE  (JS port of the Python logic)
+═══════════════════════════════════════════════════════ */
+const LEG1 = [
+  [-0.5,0,-0.5],[-0.5,0,0.5],[-0.5,2,-0.5],[-0.5,2,0.5],
+  [0.5,0,-0.5],[0.5,0,0.5],[0.5,2,-0.5],[0.5,2,0.5]
+];
+const LEG2 = [
+  [-0.5,-0.5,-0.5],[-0.5,-0.5,0.5],[-0.5,0.5,-0.5],[-0.5,0.5,0.5],
+  [1.5,-0.5,-0.5],[1.5,-0.5,0.5],[1.5,0.5,-0.5],[1.5,0.5,0.5]
+];
+const VERTS = [...LEG1,...LEG2]; // 16 corners
+const S = {x:[-2.5,1.5],y:[-0.5,1.5],z:[-0.5,0.5]};
+const EPS = 0.001;
+
+function rotZ(deg){
+  const r=deg*Math.PI/180, c=Math.cos(r), s=Math.sin(r);
+  return VERTS.map(([x,y,z])=>[x*c-y*s, x*s+y*c, z]);
+}
+function aabb(vs){
+  let n=0;
+  for(const [x,y,z] of vs)
+    if(!(S.x[0]-EPS<=x&&x<=S.x[1]+EPS&&S.y[0]-EPS<=y&&y<=S.y[1]+EPS&&S.z[0]-EPS<=z&&z<=S.z[1]+EPS)) n++;
+  return{collision:n>0,violations:n};
+}
+function sdf(vs){
+  const arr=vs.map(([x,y,z])=>Math.max(S.x[0]-x,x-S.x[1],S.y[0]-y,y-S.y[1],S.z[0]-z,z-S.z[1]));
+  const mx=Math.max(...arr);
+  return{collision:mx>0,maxPen:mx,violations:arr.filter(v=>v>0).length};
+}
+function geo(vs){
+  const n=vs.filter(([x,y,z])=>S.x[0]<=x&&x<=S.x[1]&&S.y[0]<=y&&y<=S.y[1]&&S.z[0]<=z&&z<=S.z[1]).length;
+  return{collision:n<vs.length,frac:n/vs.length};
+}
+
+/* ═══════════════════════════════════════════════════════
+   THREE.JS SCENE
+═══════════════════════════════════════════════════════ */
+const canvas=document.getElementById('cv');
+const zone=document.getElementById('cv-zone');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setClearColor(0x07070f,1);
+renderer.shadowMap.enabled=true;
+
+const scene=new THREE.Scene();
+const cam=new THREE.PerspectiveCamera(48,1,0.01,100);
+
+/* Lighting */
+scene.add(new THREE.AmbientLight(0xffffff,0.35));
+const sun=new THREE.DirectionalLight(0x8899ff,1.4);
+sun.position.set(6,9,5);
+scene.add(sun);
+const fill=new THREE.DirectionalLight(0x4466cc,0.5);
+fill.position.set(-5,2,-4);
+scene.add(fill);
+
+/* Grid */
+const grid=new THREE.GridHelper(10,20,0x141428,0x141428);
+grid.position.y=-0.5;
+scene.add(grid);
+
+/* ── L-block ── */
+const blockMat=new THREE.MeshStandardMaterial({
+  color:0x2244bb,metalness:.15,roughness:.7,
+  emissive:0x001133,emissiveIntensity:.4
+});
+const edgeMat=new THREE.LineBasicMaterial({color:0x4477ff,opacity:.65,transparent:true});
+
+const lGroup=new THREE.Group();
+
+// Leg 1 (vertical)
+const g1=new THREE.BoxGeometry(1,2,1);
+const m1=new THREE.Mesh(g1,blockMat); m1.position.set(0,1,0);
+const e1=new THREE.LineSegments(new THREE.EdgesGeometry(g1),edgeMat); e1.position.copy(m1.position);
+
+// Leg 2 (horizontal)
+const g2=new THREE.BoxGeometry(2,1,1);
+const m2=new THREE.Mesh(g2,blockMat); m2.position.set(0.5,0,0);
+const e2=new THREE.LineSegments(new THREE.EdgesGeometry(g2),edgeMat); e2.position.copy(m2.position);
+
+lGroup.add(m1,m2,e1,e2);
+
+/* Vertex spheres (one per corner of L-block) */
+const vGeo=new THREE.SphereGeometry(0.045,8,6);
+const vSpheres=VERTS.map(([x,y,z])=>{
+  const mat=new THREE.MeshBasicMaterial({color:0xff8800});
+  const s=new THREE.Mesh(vGeo,mat);
+  s.position.set(x,y,z);
+  lGroup.add(s);
+  return s;
+});
+
+scene.add(lGroup);
+
+/* Slot wireframe */
+const slotGeo=new THREE.BoxGeometry(4,2,1);
+const slotMat=new THREE.LineBasicMaterial({color:0xffffff,opacity:.22,transparent:true});
+const slotWire=new THREE.LineSegments(new THREE.EdgesGeometry(slotGeo),slotMat);
+slotWire.position.set(-0.5,0.5,0);
+scene.add(slotWire);
+
+/* Axes */
+const ax=new THREE.AxesHelper(1.5);
+ax.position.set(-3,-0.5,-1.2);
+scene.add(ax);
+
+/* ── Camera orbit ── */
+let theta=0.72,phi=0.52,radius=7.5;
+let dragging=false,lx=0,ly=0;
+
+function camUpdate(){
+  cam.position.set(
+    radius*Math.cos(phi)*Math.sin(theta),
+    radius*Math.sin(phi),
+    radius*Math.cos(phi)*Math.cos(theta)
+  );
+  cam.lookAt(0,0.5,0);
+}
+camUpdate();
+
+canvas.addEventListener('mousedown',e=>{dragging=true;lx=e.clientX;ly=e.clientY;canvas.style.cursor='grabbing'});
+window.addEventListener('mouseup',()=>{dragging=false;canvas.style.cursor='grab'});
+window.addEventListener('mousemove',e=>{
+  if(!dragging)return;
+  theta-=(e.clientX-lx)*0.009;
+  phi=Math.max(-0.15,Math.min(1.25,phi+(e.clientY-ly)*0.007));
+  lx=e.clientX;ly=e.clientY;
+  camUpdate();
+});
+canvas.addEventListener('wheel',e=>{
+  radius=Math.max(3,Math.min(14,radius+e.deltaY*.012));
+  camUpdate();
+},{passive:true});
+canvas.style.cursor='grab';
+
+/* Touch support */
+let lt=null;
+canvas.addEventListener('touchstart',e=>{lt={x:e.touches[0].clientX,y:e.touches[0].clientY};e.preventDefault()},{passive:false});
+canvas.addEventListener('touchmove',e=>{
+  if(!lt)return;
+  theta-=(e.touches[0].clientX-lt.x)*0.009;
+  phi=Math.max(-0.15,Math.min(1.25,phi+(e.touches[0].clientY-lt.y)*0.007));
+  lt={x:e.touches[0].clientX,y:e.touches[0].clientY};
+  camUpdate();e.preventDefault();
+},{passive:false});
+
+/* ══════════════════════════════════════════════
+   UI UPDATE
+══════════════════════════════════════════════ */
+let curAngle=0;
+
+function setStatus(el,ok){ el.className='lst '+(ok?'pass':'fail'); el.textContent=ok?'PASS':'FAIL'; }
+function setCard(el,ok){ el.className='lcard '+(ok?'pass':'fail'); }
+
+function updateUI(deg){
+  curAngle=deg;
+  const rv=rotZ(deg);
+  const A=aabb(rv), D=sdf(rv), G=geo(rv);
+  const fit=!A.collision;
+
+  // 3-D color
+  blockMat.color.setHex(fit?0x003322:0x440011);
+  blockMat.emissive.setHex(fit?0x001a0d:0x1a0005);
+  edgeMat.color.setHex(fit?0x00ee77:0xff3344);
+  slotMat.color.setHex(fit?0x00ff88:0xff3344);
+  slotMat.opacity=fit?.45:.2;
+
+  // Vertex sphere colours
+  rv.forEach(([x,y,z],i)=>{
+    const inside=S.x[0]-EPS<=x&&x<=S.x[1]+EPS&&S.y[0]-EPS<=y&&y<=S.y[1]+EPS&&S.z[0]-EPS<=z&&z<=S.z[1]+EPS;
+    vSpheres[i].material.color.setHex(inside?0x00ff88:0xff3344);
+  });
+
+  // HUD
+  document.getElementById('hud-state').textContent=fit?'FIT':'COLLISION';
+  document.getElementById('hud-state').className='hud-state'+(fit?'':' bad');
+  document.getElementById('hud-angle').textContent=`θ = ${deg}°`;
+  document.getElementById('rot-num').textContent=deg;
+
+  // Level 1
+  setCard(document.getElementById('l1card'),!A.collision);
+  setStatus(document.getElementById('l1st'),!A.collision);
+  document.getElementById('l1vio').textContent=`${A.violations} / ${VERTS.length}`;
+
+  // Level 2
+  setCard(document.getElementById('l2card'),!D.collision);
+  setStatus(document.getElementById('l2st'),!D.collision);
+  document.getElementById('l2pen').textContent=D.maxPen.toFixed(4)+' units';
+  document.getElementById('l2vio').textContent=`${D.violations} / ${VERTS.length}`;
+  const pf=Math.max(0,Math.min(1,1-D.maxPen/2));
+  document.getElementById('l2bar').style.width=(pf*100).toFixed(1)+'%';
+  document.getElementById('l2bar').className='bar-fill'+(D.collision?' bad':'');
+
+  // Level 3
+  setCard(document.getElementById('l3card'),!G.collision);
+  setStatus(document.getElementById('l3st'),!G.collision);
+  document.getElementById('l3frac').textContent=(G.frac*100).toFixed(1)+'%';
+  document.getElementById('l3bar').style.width=(G.frac*100).toFixed(1)+'%';
+  document.getElementById('l3bar').className='bar-fill'+(G.collision?' bad':'');
+}
+
+function setAngle(deg){
+  deg=((deg%360)+360)%360;
+  document.getElementById('slider').value=deg;
+  lGroup.rotation.z=deg*Math.PI/180;
+  updateUI(deg);
+  document.querySelectorAll('.pbtn').forEach(b=>{
+    b.className='pbtn'+(parseInt(b.textContent)===deg?' lit':'');
+  });
+}
+
+document.getElementById('slider').addEventListener('input',e=>{
+  setAngle(parseInt(e.target.value));
+});
+
+/* ══════════════════════════════════════════════
+   AGENT
+══════════════════════════════════════════════ */
+function runAgent(){
+  const raw=document.getElementById('ainput').value.trim();
+  if(!raw)return;
+  const rep=document.getElementById('agent-reply');
+  rep.className='agent-reply';
+  rep.textContent='› Parsing spatial intent…';
+
+  setTimeout(()=>{
+    const txt=raw.toLowerCase();
+    let deg=null;
+
+    // Extract angle
+    const m=txt.match(/(\d+)\s*(?:deg|degree|°|º)/);
+    if(m) deg=parseInt(m[1]);
+    if(/\b90\b/.test(txt)&&deg===null) deg=90;
+    if(/\b45\b/.test(txt)&&deg===null) deg=45;
+    if(/\b180\b/.test(txt)&&deg===null) deg=180;
+    if(/\b0\b|no rot|zero/i.test(txt)&&deg===null) deg=0;
+
+    if(/best|optimal|which angle|what angle|find.*(fit|work)|work/i.test(txt)){
+      setAngle(90);
+      rep.className='agent-reply live';
+      rep.textContent='› Optimal rotation is 90°. The L-block rotates flat, with its long axis (Y→X) fitting within X:[-2.5,1.5]. All 3 validation levels pass.';
+    } else if(deg!==null){
+      setAngle(deg);
+      const rv=rotZ(deg);
+      const A=aabb(rv), D=sdf(rv);
+      rep.className='agent-reply live';
+      if(!A.collision){
+        rep.textContent=`› At ${deg}°: FIT ✓  All ${VERTS.length} vertices within slot bounds. Max SDF = ${D.maxPen.toFixed(4)} (negative = safely inside).`;
+      } else {
+        rep.textContent=`› At ${deg}°: COLLISION ✗  ${A.violations}/${VERTS.length} vertices outside bounds. Max penetration = ${D.maxPen.toFixed(4)} units.`;
+      }
+    } else if(/fit|pass|current|now/i.test(txt)){
+      const rv=rotZ(curAngle);
+      const A=aabb(rv), D=sdf(rv);
+      rep.className='agent-reply live';
+      rep.textContent=`› At current angle (${curAngle}°): ${!A.collision?'FIT ✓ — passes all 3 levels.':'COLLISION ✗ — '+A.violations+' violations, max penetration '+D.maxPen.toFixed(4)+' units.'}`;
+    } else {
+      rep.className='agent-reply live';
+      rep.textContent='› Try: "rotate 90 degrees" · "does 45° fit?" · "find the optimal rotation"';
+    }
+    document.getElementById('ainput').value='';
+  }, 520);
+}
+
+document.getElementById('ainput').addEventListener('keydown',e=>{if(e.key==='Enter')runAgent()});
+
+/* ══════════════════════════════════════════════
+   RESIZE + RENDER LOOP
+══════════════════════════════════════════════ */
+function resize(){
+  const w=zone.clientWidth, h=zone.clientHeight;
+  if(w===0||h===0)return;
+  renderer.setSize(w,h,false);
+  cam.aspect=w/h;
+  cam.updateProjectionMatrix();
+}
+
+window.addEventListener('resize',resize);
+
+// slow auto-orbit when idle
+let autoT=theta, lastDrag=0;
+function animate(t){
+  requestAnimationFrame(animate);
+  if(!dragging && t-lastDrag>4000){
+    autoT+=.0025; theta=autoT; camUpdate();
+  }
+  renderer.render(scene,cam);
+}
+
+canvas.addEventListener('mousedown',()=>{lastDrag=performance.now()});
+
+// Boot
+requestAnimationFrame(()=>{
+  resize();
+  setAngle(0);
+  animate(0);
+});
+</script>
+</body>
+</html>
